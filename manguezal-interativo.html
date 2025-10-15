@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manguezal Interativo 🌊</title>
+<style>
+:root {
+  --verde: #2a6e3f;
+  --verde-escuro: #1a4d2a;
+  --verde-claro: #3c8c5c;
+  --claro: #e8f5e9;
+  --texto: #333;
+  --sombra: 0 4px 12px rgba(0,0,0,0.15);
+  --transicao: all 0.3s ease;
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  color: var(--texto);
+  background: linear-gradient(180deg, #d7f7e1, #f6fff7);
+  overflow-x: hidden;
+}
+
+/* Fundo sonoro */
+audio {
+  display: none;
+}
+
+/* Cabeçalho */
+header {
+  background: linear-gradient(135deg, var(--verde), var(--verde-escuro));
+  color: white;
+  text-align: center;
+  padding: 3rem 1rem;
+  box-shadow: var(--sombra);
+}
+header h1 {
+  font-size: 2.6rem;
+  margin-bottom: 0.5rem;
+}
+header p {
+  font-size: 1.2rem;
+  opacity: 0.9;
+}
+
+/* Seções */
+section {
+  max-width: 950px;
+  margin: 2rem auto;
+  background: white;
+  border-radius: 12px;
+  box-shadow: var(--sombra);
+  padding: 2rem;
+  transition: var(--transicao);
+}
+section:hover {
+  transform: translateY(-3px);
+}
+
+/* Botão */
+button {
+  background: linear-gradient(135deg, var(--verde), var(--verde-escuro));
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  border-radius: 50px;
+  cursor: pointer;
+  box-shadow: var(--sombra);
+  transition: var(--transicao);
+}
+button:hover {
+  transform: scale(1.07);
+  box-shadow: 0 0 15px rgba(0,128,0,0.4);
+}
+
+/* Modal */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6);
+  overflow-y: auto;
+}
+.modal-content {
+  background: white;
+  margin: 5% auto;
+  padding: 2rem;
+  border-radius: 10px;
+  max-width: 800px;
+  box-shadow: var(--sombra);
+  position: relative;
+  animation: aparecer 0.5s ease;
+}
+@keyframes aparecer {
+  from {opacity: 0; transform: translateY(-40px);}
+  to {opacity: 1; transform: translateY(0);}
+}
+.close {
+  position: absolute;
+  top: 15px; right: 20px;
+  font-size: 1.8rem;
+  cursor: pointer;
+  color: #777;
+}
+.close:hover { color: var(--verde); }
+
+/* Quiz */
+.quiz-container {
+  text-align: left;
+}
+.question {
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 1rem;
+}
+.question h3 {
+  color: var(--verde);
+}
+.option {
+  padding: 0.8rem;
+  background: var(--claro);
+  border-radius: 5px;
+  margin: 0.4rem 0;
+  cursor: pointer;
+  transition: var(--transicao);
+}
+.option:hover {
+  background: #c8e9d0;
+}
+.option.selected {
+  background: var(--verde-claro);
+  color: white;
+}
+
+/* Feedback visual */
+.option.correct {
+  animation: brilhar 0.8s ease forwards;
+}
+@keyframes brilhar {
+  0% {background-color: #4CAF50; color: white;}
+  50% {background-color: #76ff7a;}
+  100% {background-color: #4CAF50;}
+}
+.option.wrong {
+  animation: tremer 0.4s ease;
+  background-color: #f55a4e !important;
+  color: white;
+}
+@keyframes tremer {
+  0%,100% {transform: translateX(0);}
+  25% {transform: translateX(-5px);}
+  75% {transform: translateX(5px);}
+}
+
+/* Resultado */
+.result {
+  text-align: center;
+  display: none;
+}
+.score {
+  font-size: 2rem;
+  color: var(--verde-claro);
+  margin: 1rem 0;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+  header h1 { font-size: 2.2rem; }
+  button { font-size: 1rem; padding: 0.8rem 1.5rem; }
+  section { padding: 1.5rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- Som ambiente -->
+<audio id="fundo" loop autoplay>
+  <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_8b17c3a1d0.mp3?filename=ocean-waves-ambient-11034.mp3" type="audio/mpeg">
+</audio>
+
+<header>
+  <h1>Manguezal Interativo 🌿</h1>
+  <p>Aprenda, preserve e teste seus conhecimentos sobre os manguezais!</p>
+</header>
+
+<section>
+  <h2>Sobre o Projeto</h2>
+  <p>O Manguezal Interativo é um espaço educativo que une tecnologia e natureza. Aqui, você aprende sobre a importância dos manguezais e pode testar seus conhecimentos em um quiz interativo com sons e animações.</p>
+  <div style="text-align:center; margin-top:1.5rem;">
+    <button id="abrirQuiz">🎯 Iniciar Quiz</button>
+  </div>
+</section>
+
+<!-- Modal -->
+<div id="quizModal" class="modal">
+  <div class="modal-content">
+    <span class="close" id="fecharQuiz">&times;</span>
+
+    <div class="quiz-container" id="quizContainer">
+      <h2>Quiz: Vida nos Manguezais 🌊</h2>
+
+      <!-- Perguntas -->
+      <div class="question"><h3>1. Qual é a principal função ecológica dos manguezais?</h3>
+        <div class="option" data-v="a">Fornecer madeira para construção</div>
+        <div class="option" data-v="b">Servir de berçário para a vida marinha</div>
+        <div class="option" data-v="c">Aumentar a temperatura das águas</div>
+        <div class="option" data-v="d">Produzir energia elétrica</div>
+      </div>
+
+      <div class="question"><h3>2. Que problema afeta diretamente a segurança alimentar das comunidades?</h3>
+        <div class="option" data-v="a">Falta de redes de pesca</div>
+        <div class="option" data-v="b">Contaminação por metais pesados</div>
+        <div class="option" data-v="c">Baixa salinidade</div>
+        <div class="option" data-v="d">Ausência de turistas</div>
+      </div>
+
+      <div class="question"><h3>3. Qual alternativa NÃO representa uma ameaça aos manguezais?</h3>
+        <div class="option" data-v="a">Expansão urbana desordenada</div>
+        <div class="option" data-v="b">Aterros e poluição</div>
+        <div class="option" data-v="c">Pesca artesanal sustentável</div>
+        <div class="option" data-v="d">Desmatamento</div>
+      </div>
+
+      <div class="question"><h3>4. Qual é o papel dos pescadores e marisqueiras?</h3>
+        <div class="option" data-v="a">Destruir o ecossistema</div>
+        <div class="option" data-v="b">Transmitir saberes tradicionais</div>
+        <div class="option" data-v="c">Aumentar a poluição</div>
+        <div class="option" data-v="d">Evitar o uso sustentável</div>
+      </div>
+
+      <div class="question"><h3>5. Qual ação ajuda na preservação dos manguezais?</h3>
+        <div class="option" data-v="a">Jogar lixo nos rios</div>
+        <div class="option" data-v="b">Construir sobre o mangue</div>
+        <div class="option" data-v="c">Participar de mutirões de limpeza</div>
+        <div class="option" data-v="d">Usar redes ilegais</div>
+      </div>
+
+      <div class="question"><h3>6. Que tipo de poluição mais afeta os manguezais atualmente?</h3>
+        <div class="option" data-v="a">Luminosa</div>
+        <div class="option" data-v="b">Sonora</div>
+        <div class="option" data-v="c">Química e industrial</div>
+        <div class="option" data-v="d">Eólica</div>
+      </div>
+
+      <div class="question"><h3>7. Por que os manguezais são chamados de “berçários do mar”?</h3>
+        <div class="option" data-v="a">Porque produzem areia</div>
+        <div class="option" data-v="b">Porque abrigam filhotes de várias espécies</div>
+        <div class="option" data-v="c">Porque têm muitas árvores</div>
+        <div class="option" data-v="d">Porque são secos e quentes</div>
+      </div>
+
+      <div class="question"><h3>8. Qual destas práticas ajuda a reduzir os impactos sobre os manguezais?</h3>
+        <div class="option" data-v="a">Educação ambiental</div>
+        <div class="option" data-v="b">Queimadas controladas</div>
+        <div class="option" data-v="c">Pesca industrial intensiva</div>
+        <div class="option" data-v="d">Aterros sanitários no mangue</div>
+      </div>
+
+      <div class="question"><h3>9. Que elemento químico é comum nas águas poluídas por indústrias?</h3>
+        <div class="option" data-v="a">Cálcio</div>
+        <div class="option" data-v="b">Mercúrio</div>
+        <div class="option" data-v="c">Oxigênio</div>
+        <div class="option" data-v="d">Carbono</div>
+      </div>
+
+      <div class="question"><h3>10. Como as escolas podem ajudar na conservação dos manguezais?</h3>
+        <div class="option" data-v="a">Promovendo educação ambiental</div>
+        <div class="option" data-v="b">Ignorando o tema</div>
+        <div class="option" data-v="c">Proibindo pesquisas</div>
+        <div class="option" data-v="d">Aumentando o consumo de plástico</div>
+      </div>
+
+      <button id="enviarQuiz">Enviar Respostas</button>
+    </div>
+
+    <div class="result" id="quizResultado">
+      <h3>Seu Resultado 🌱</h3>
+      <div class="score" id="pontuacao">0/10</div>
+      <p id="mensagem"></p>
+      <button id="refazer">Refazer Quiz</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// Sons
+const somCerto = new Audio("https://cdn.pixabay.com/download/audio/2022/03/15/audio_ef4f6f6618.mp3?filename=correct-2-46134.mp3");
+const somErrado = new Audio("https://cdn.pixabay.com/download/audio/2021/09/13/audio_8d2b9c0d62.mp3?filename=error-126627.mp3");
+
+// Elementos
+const abrir = document.getElementById('abrirQuiz');
+const fechar = document.getElementById('fecharQuiz');
+const modal = document.getElementById('quizModal');
+const enviar = document.getElementById('enviarQuiz');
+const quiz = document.getElementById('quizContainer');
+const resultado = document.getElementById('quizResultado');
+const pontuacao = document.getElementById('pontuacao');
+const mensagem = document.getElementById('mensagem');
+const refazer = document.getElementById('refazer');
+const opcoes = document.querySelectorAll('.option');
+
+// Respostas
+const respostasCorretas = {1:'b',2:'b',3:'c',4:'b',5:'c',6:'c',7:'b',8:'a',9:'b',10:'a'};
+
+// Abrir e fechar modal
+abrir.addEventListener('click',()=>{ modal.style.display='block'; document.body.style.overflow='hidden'; });
+fechar.addEventListener('click',()=>{ modal.style.display='none'; document.body.style.overflow='auto'; resetar(); });
+window.addEventListener('click',e=>{ if(e.target===modal){ modal.style.display='none'; document.body.style.overflow='auto'; resetar(); }});
+
+// Seleção de opções
+opcoes.forEach(opt=>{
+  opt.addEventListener('click',()=>{
+    const q = opt.closest('.question');
+    q.querySelectorAll('.option').forEach(o=>o.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+
+// Envio de respostas
+enviar.addEventListener('click',()=>{
+  let acertos=0;
+  document.querySelectorAll('.question').forEach((q,i)=>{
+    const marcada=q.querySelector('.selected');
+    const correta=q.querySelector(`[data-v="${respostasCorretas[i+1]}"]`);
+    if(marcada){
+      if(marcada.dataset.v===respostasCorretas[i+1]){
+        acertos++;
+        marcada.classList.add('correct');
+        somCerto.play();
+      } else {
+        marcada.classList.add('wrong');
+        correta.classList.add('correct');
+        somErrado.play();
+      }
+    }
+  });
+  pontuacao.textContent=`${acertos}/10`;
+  if(acertos===10) mensagem.textContent="Perfeito! Você é um verdadeiro protetor dos manguezais! 🌿";
+  else if(acertos>=6) mensagem.textContent="Muito bom! Continue aprendendo e ajudando a natureza!";
+  else mensagem.textContent="Continue estudando — os manguezais precisam de você!";
+  quiz.style.display='none';
+  resultado.style.display='block';
+});
+
+// Refazer
+refazer.addEventListener('click',resetar);
+function resetar(){
+  opcoes.forEach(o=>o.classList.remove('selected','correct','wrong'));
+  quiz.style.display='block';
+  resultado.style.display='none';
+}
+</script>
+
+</body>
+</html>
